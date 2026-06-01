@@ -1,0 +1,38 @@
+Template(class: "SingularityAppsVideosPlayerWindow", parent: "SingularityWidgetsWindow") {
+
+Overlay(id: "player_overlay") {
+    Picture(id: "video_picture", hexpand: true, vexpand: true)
+        .contentFit("contain")
+
+    VBox(id: "overlay_box", hexpand: true, vexpand: true)
+        .asChildType("overlay") {
+
+        Box(id: "click_spacer", vexpand: true)
+
+        VBox(id: "controls_box",
+             marginBottom: 24, marginStart: 24, marginEnd: 24)
+            .cssClass("osd-controls") {
+
+            Scale(id: "seek_bar", hexpand: true, drawValue: false,
+                  orientation: "horizontal")
+
+            HBox(id: "buttons_row", spacing: 12,
+                 halign: "center", marginTop: 8) {
+
+                Button(id: "back_btn",
+                       iconName: "media-skip-backward-symbolic")
+                    .cssClass("circular-button")
+
+                Button(id: "play_btn",
+                       iconName: "media-playback-start-symbolic")
+                    .cssClass("circular-button")
+                    .cssClass("large-button")
+
+                Button(id: "fwd_btn",
+                       iconName: "media-skip-forward-symbolic")
+                    .cssClass("circular-button")
+            }
+        }
+    }
+}
+}

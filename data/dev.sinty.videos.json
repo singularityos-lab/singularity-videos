@@ -1,0 +1,8 @@
+{
+  "id": "dev.sinty.videos",
+  "name": "Videos",
+  "description": "Watch videos and media files",
+  "categories": ["AudioVideo", "Video", "Player"],
+  "icon": "dev.sinty.videos",
+  "exec": "singularity-videos"
+}

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Videos
+Comment=Play movies and videos
+Exec=singularity-videos %f
+Icon=dev.sinty.videos
+Terminal=false
+Type=Application
+Categories=AudioVideo;Player;
+MimeType=video/mp4;video/x-matroska;video/x-msvideo;video/webm;video/quicktime;video/mpeg;video/ogg;video/3gpp;video/x-flv;video/x-ms-wmv;video/mp2t;audio/mpeg;audio/flac;audio/ogg;audio/wav;audio/aac;audio/x-vorbis+ogg;audio/x-flac;
+StartupNotify=true
+StartupWMClass=dev.sinty.videos
