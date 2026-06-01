@@ -73,15 +73,15 @@ namespace Singularity.Apps.Videos {
         private Gtk.Widget _build_welcome_page () {
             var wp = new Singularity.Widgets.WelcomePage ();
             wp.app_icon_name = "dev.sinty.videos";
-            wp.title         = "Videos";
+            wp.title         = _("Videos");
             // If the GTK4 paintable sink isn't available the video would
             // render to a separate floating Wayland surface - make the
             // missing dependency obvious to the user rather than silently
             // failing.
             if (_player.paintable == null) {
-                wp.subtitle = "Missing video sink. Install gstreamer1.0-gtk4 and restart.";
+                wp.subtitle = _("Missing video sink. Install gstreamer1.0-gtk4 and restart.");
             } else {
-                wp.subtitle = "Watch movies, shows, and clips";
+                wp.subtitle = _("Watch movies, shows, and clips");
             }
             wp.add_action (
                 "document-open-symbolic",

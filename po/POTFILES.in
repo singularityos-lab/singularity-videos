@@ -1,0 +1,4 @@
+# List of source files containing translatable strings.
+src/gst_player.vala
+src/main.vala
+src/player_window.vala
