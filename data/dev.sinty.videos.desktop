@@ -9,3 +9,12 @@ Categories=AudioVideo;Player;
 MimeType=video/mp4;video/x-matroska;video/x-msvideo;video/webm;video/quicktime;video/mpeg;video/ogg;video/3gpp;video/x-flv;video/x-ms-wmv;video/mp2t;audio/mpeg;audio/flac;audio/ogg;audio/wav;audio/aac;audio/x-vorbis+ogg;audio/x-flac;
 StartupNotify=true
 StartupWMClass=dev.sinty.videos
+Actions=resume-last;open-video;
+
+[Desktop Action resume-last]
+Name=Resume Last Video
+Exec=singularity-videos --resume-last
+
+[Desktop Action open-video]
+Name=Open Video
+Exec=singularity-videos --open-video

@@ -9,28 +9,50 @@ Overlay(id: "player_overlay") {
 
         Box(id: "click_spacer", vexpand: true)
 
-        VBox(id: "controls_box",
-             marginBottom: 24, marginStart: 24, marginEnd: 24)
-            .cssClass("osd-controls") {
+        VBox(id: "controls_box", spacing: 2)
+            .cssClass("videos-controls") {
 
-            Scale(id: "seek_bar", hexpand: true, drawValue: false,
-                  orientation: "horizontal")
+            HBox(id: "seek_row", spacing: 10) {
+                Label(id: "elapsed_lbl", label: "0:00", xalign: 0, widthChars: 5)
+                    .cssClass("videos-time")
+                Box(id: "seek_slot", hexpand: true)
+                Button(id: "remaining_btn", label: "0:00",
+                       tooltipText: "Show Total Time")
+                    .cssClass("videos-time-toggle").translatable("tooltipText")
+            }
 
-            HBox(id: "buttons_row", spacing: 12,
-                 halign: "center", marginTop: 8) {
+            CenterBox(id: "buttons_row") {
+                HBox(id: "start_group", spacing: 2)
+                    .asChildType("start") {
+                    MenuButton(id: "volume_btn", iconName: "audio-volume-high-symbolic",
+                               tooltipText: "Volume")
+                        .cssClass("videos-ctrl").translatable("tooltipText")
+                }
 
-                Button(id: "back_btn",
-                       iconName: "media-skip-backward-symbolic")
-                    .cssClass("circular-button")
+                HBox(id: "center_group", spacing: 10)
+                    .asChildType("center") {
+                    Button(id: "back_btn", iconName: "media-seek-backward-symbolic",
+                           tooltipText: "Back 10 Seconds", actionName: "win.skip-back")
+                        .cssClass("videos-ctrl").translatable("tooltipText")
+                    Button(id: "play_btn", iconName: "media-playback-start-symbolic",
+                           tooltipText: "Play", actionName: "win.play-pause")
+                        .cssClass("videos-play").translatable("tooltipText")
+                    Button(id: "fwd_btn", iconName: "media-seek-forward-symbolic",
+                           tooltipText: "Forward 10 Seconds", actionName: "win.skip-forward")
+                        .cssClass("videos-ctrl").translatable("tooltipText")
+                }
 
-                Button(id: "play_btn",
-                       iconName: "media-playback-start-symbolic")
-                    .cssClass("circular-button")
-                    .cssClass("large-button")
-
-                Button(id: "fwd_btn",
-                       iconName: "media-skip-forward-symbolic")
-                    .cssClass("circular-button")
+                HBox(id: "end_group", spacing: 2)
+                    .asChildType("end") {
+                    MenuButton(id: "tracks_btn", iconName: "media-view-subtitles-symbolic",
+                               tooltipText: "Subtitles and Audio", visible: false)
+                        .cssClass("videos-ctrl").translatable("tooltipText")
+                    MenuButton(id: "speed_btn", tooltipText: "Playback Speed")
+                        .cssClass("videos-speed").translatable("tooltipText")
+                    Button(id: "fullscreen_btn", iconName: "view-fullscreen-symbolic",
+                           tooltipText: "Fullscreen", actionName: "win.fullscreen")
+                        .cssClass("videos-ctrl").translatable("tooltipText")
+                }
             }
         }
     }

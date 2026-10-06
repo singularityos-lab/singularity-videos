@@ -1,0 +1,198 @@
+.videos-player {
+    background-color: black;
+}
+
+.videos-window .singularity-hover-on-content .singularity-hover-controls,
+.videos-window .singularity-hover-on-content:hover .singularity-hover-controls {
+    opacity: 1;
+}
+
+.videos-controls {
+    padding: 8px 14px 8px 14px;
+    border-radius: 22px;
+    background-color: alpha(black, 0.62);
+    border: 1px solid alpha(white, 0.16);
+    box-shadow: 0 8px 28px alpha(black, 0.45), 0 1px 4px alpha(black, 0.35);
+}
+
+.videos-time,
+button.videos-time {
+    font-size: 12px;
+    font-weight: 500;
+    font-feature-settings: "tnum";
+    color: alpha(white, 0.86);
+}
+
+button.videos-time-toggle {
+    min-height: 24px;
+    padding: 0 6px;
+    border-radius: 99px;
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+    background-image: none;
+}
+
+button.videos-time-toggle:hover {
+    background-color: alpha(white, 0.12);
+}
+
+button.videos-time-toggle label {
+    color: alpha(white, 0.86);
+}
+
+.videos-ctrl > button,
+button.videos-ctrl {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+    border-radius: 99px;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    background-color: transparent;
+    background-image: none;
+    color: white;
+    transition: background-color 0.12s ease;
+}
+
+.videos-ctrl > button image,
+button.videos-ctrl image {
+    -gtk-icon-size: 18px;
+    color: white;
+}
+
+.videos-ctrl > button:hover,
+button.videos-ctrl:hover,
+.videos-ctrl > button:checked {
+    background-color: alpha(white, 0.14);
+}
+
+.videos-ctrl > button:active,
+button.videos-ctrl:active {
+    background-color: alpha(white, 0.22);
+}
+
+.videos-ctrl > button:focus-visible,
+button.videos-ctrl:focus-visible,
+button.videos-time-toggle:focus-visible {
+    outline: 2px solid alpha(@accent_color, 0.8);
+    outline-offset: -2px;
+}
+
+button.videos-ctrl.videos-play {
+    min-width: 44px;
+    min-height: 44px;
+    background-color: alpha(white, 0.94);
+    box-shadow: 0 2px 8px alpha(black, 0.35);
+}
+
+button.videos-ctrl.videos-play:hover {
+    background-color: white;
+}
+
+button.videos-ctrl.videos-play:active {
+    background-color: alpha(white, 0.8);
+}
+
+button.videos-ctrl.videos-play image {
+    -gtk-icon-size: 22px;
+    color: #111111;
+}
+
+.videos-speed > button label {
+    font-size: 13px;
+    font-weight: 600;
+    font-feature-settings: "tnum";
+    color: white;
+    min-width: 28px;
+}
+
+.videos-volume {
+    padding: 4px 6px;
+}
+
+.videos-volume scale {
+    min-width: 150px;
+}
+
+.videos-volume-value {
+    font-feature-settings: "tnum";
+    min-width: 36px;
+}
+
+videos-trim-canvas {
+    background-color: black;
+}
+
+.sx-control-strip {
+    min-height: 36px;
+}
+
+.sx-control-strip button.flat:checked,
+.sx-control-strip button.flat:checked:hover {
+    background-color: alpha(@accent_color, 0.22);
+    color: @accent_color;
+}
+
+.sx-control-strip .numeric {
+    font-feature-settings: "tnum";
+}
+
+.sx-control-strip-sep {
+    margin: 8px 2px;
+}
+
+.videos-trim-strip .videos-trim-timecode {
+    font-weight: 600;
+    margin-left: 6px;
+}
+
+.videos-trim-clip {
+    font-weight: 600;
+}
+
+videos-trim-timeline {
+    margin-top: 2px;
+}
+
+.videos-export-size {
+    font-size: 12px;
+    font-feature-settings: "tnum";
+}
+
+.videos-poster {
+    border-radius: 12px;
+}
+
+.videos-poster.videos-poster-video {
+    background-color: black;
+}
+
+.videos-duration {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 6px;
+    color: white;
+    background-color: alpha(black, 0.72);
+}
+
+.videos-tile {
+    padding: 0;
+    border-radius: 16px;
+}
+
+.videos-progress trough,
+.videos-progress progress {
+    min-height: 4px;
+    border-radius: 0;
+}
+
+.videos-progress {
+    margin: 0;
+}
+
+.videos-embed-slot {
+    background-color: black;
+}

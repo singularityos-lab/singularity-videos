@@ -1,0 +1,1 @@
+option('ges', type: 'feature', value: 'auto', description: 'Export trimmed videos with GStreamer Editing Services when available')

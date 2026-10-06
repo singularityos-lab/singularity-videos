@@ -1,0 +1,38 @@
+{
+  "app_id": "dev.sinty.videos",
+  "name": "Videos",
+  "icon": "dev.sinty.videos",
+  "exec": "singularity-videos",
+  "description": "Watch videos and media files",
+  "schema-id": "dev.sinty.videos",
+  "settings": [
+    {
+      "key": "open-in-browser",
+      "label": "Open Online Videos in the Browser",
+      "subtitle": "Use the web browser instead of the player inside Videos",
+      "type": "boolean",
+      "widget": "switch"
+    },
+    {
+      "key": "youtube-api-key",
+      "label": "Personal YouTube API Key",
+      "subtitle": "Optional, for searching YouTube without a Google account",
+      "type": "string",
+      "widget": "entry"
+    },
+    {
+      "key": "peertube-instances",
+      "label": "PeerTube Instances",
+      "subtitle": "Addresses to browse, separated by commas",
+      "type": "string",
+      "widget": "entry"
+    },
+    {
+      "key": "peertube-search-index",
+      "label": "PeerTube Search Index",
+      "subtitle": "Searches every instance; leave empty to search the first instance only",
+      "type": "string",
+      "widget": "entry"
+    }
+  ]
+}

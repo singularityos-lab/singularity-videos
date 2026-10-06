@@ -2,5 +2,14 @@
 <gresources>
   <gresource prefix="/dev/sinty/videos">
     <file preprocess="xml-stripblanks">ui/player.ui</file>
+    <file alias="style.css">resources/style.css</file>
+  </gresource>
+  <gresource prefix="/dev/sinty/videos/icons/scalable/actions">
+    <file alias="videos-aspect-ratio-symbolic.svg">data/icons/symbolic/videos-aspect-ratio-symbolic.svg</file>
+    <file alias="videos-mark-in-symbolic.svg">data/icons/symbolic/videos-mark-in-symbolic.svg</file>
+    <file alias="videos-mark-out-symbolic.svg">data/icons/symbolic/videos-mark-out-symbolic.svg</file>
+    <file alias="videos-restore-cut-symbolic.svg">data/icons/symbolic/videos-restore-cut-symbolic.svg</file>
+    <file alias="videos-trim-end-symbolic.svg">data/icons/symbolic/videos-trim-end-symbolic.svg</file>
+    <file alias="videos-trim-start-symbolic.svg">data/icons/symbolic/videos-trim-start-symbolic.svg</file>
   </gresource>
 </gresources>

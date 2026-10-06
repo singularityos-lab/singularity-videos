@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="singularity-videos">
+  <schema id="dev.sinty.videos" path="/dev/sinty/videos/">
+    <key name="open-in-browser" type="b">
+      <default>false</default>
+      <summary>Open online videos in the web browser</summary>
+      <description>Open videos from online services in the web browser instead of the embedded player.</description>
+    </key>
+    <key name="youtube-api-key" type="s">
+      <default>""</default>
+      <summary>Personal YouTube API key</summary>
+      <description>Optional YouTube Data API v3 key used for searching when no Google account is connected.</description>
+    </key>
+    <key name="peertube-instances" type="s">
+      <default>"https://framatube.org"</default>
+      <summary>PeerTube instances</summary>
+      <description>Comma separated addresses of the PeerTube instances to browse.</description>
+    </key>
+    <key name="peertube-search-index" type="s">
+      <default>"https://sepiasearch.org"</default>
+      <summary>PeerTube search index</summary>
+      <description>Address of the search index used to search all PeerTube instances. Empty searches the first instance only.</description>
+    </key>
+  </schema>
+</schemalist>
