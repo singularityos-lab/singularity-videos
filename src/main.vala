@@ -53,6 +53,7 @@ namespace Singularity.Apps.Videos {
             file_menu.append_section (null, file_open);
             var file_share = new GLib.Menu ();
             file_share.append (_("Share…"), "win.share");
+            file_share.append (_("Add Moment to a Note…"), "win.add-moment");
             file_menu.append_section (null, file_share);
             var file_close = new GLib.Menu ();
             file_close.append (_("Close Window"), "win.close");

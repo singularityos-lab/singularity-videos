@@ -31,6 +31,7 @@ namespace Singularity.Apps.Videos {
         private Gtk.Label _speed_label;
 
         private bool _is_playing = false;
+        private Singularity.Widgets.LiveTextSession? _live_text = null;
         private bool _chrome_visible = true;
         private bool _pointer_on_controls = false;
         private bool _show_remaining = true;
@@ -133,6 +134,14 @@ namespace Singularity.Apps.Videos {
             });
             share.bind_property ("enabled", _share_btn, "visible", GLib.BindingFlags.SYNC_CREATE);
             _media_actions += share;
+            _media_actions += _add_win_action ("add-moment", () => {
+                if (_uri == "") return;
+                string target = _stream_item != null ? _stream_item.external_url : _uri;
+                if (target == "" || target.has_prefix ("videos-source:")) return;
+                int seconds = (int) (_player.position_ns () / 1000000000);
+                string title = _stream_item != null ? _stream_item.title : GLib.File.new_for_uri (_uri).get_basename ();
+                Singularity.Notes.NotePicker.popup (video_picture, (id) => _add_moment (target, title, seconds, id));
+            });
 
             _mute_action = new GLib.SimpleAction.stateful ("mute", null, new GLib.Variant.boolean (false));
             _mute_action.activate.connect (() => _toggle_mute ());
@@ -286,6 +295,22 @@ namespace Singularity.Apps.Videos {
 
         private Gtk.Widget _build_player_page () {
             player_overlay.add_css_class ("videos-player");
+            if (Singularity.TextRecognition.Recognizer.get_default ().available) {
+                _live_text = new Singularity.Widgets.LiveTextSession ();
+                _live_text.view.set_geometry_func ((out ox, out oy, out scale) => _frame_geometry (out ox, out oy, out scale));
+                player_overlay.add_overlay (_live_text.view);
+                _live_text.toggle.add_css_class ("singularity-hover-btn");
+                _live_text.toggle.halign = Gtk.Align.END;
+                _live_text.toggle.valign = Gtk.Align.START;
+                _live_text.toggle.margin_top = 64;
+                _live_text.toggle.margin_end = 12;
+                _live_text.toggle.visible = false;
+                player_overlay.add_overlay (_live_text.toggle);
+                _live_text.bar.valign = Gtk.Align.START;
+                _live_text.bar.margin_top = 64;
+                player_overlay.add_overlay (_live_text.bar);
+                player_overlay.add_css_class ("singularity-hover-on-content");
+            }
             if (_player.paintable != null) {
                 video_picture.set_paintable (_player.paintable);
                 _player.paintable.invalidate_size.connect (() => _auto_resize ());
@@ -870,8 +895,31 @@ namespace Singularity.Apps.Videos {
             else open_file_dialog ();
         }
 
+        private void _add_moment (string target, string title, int seconds, string? note_id) {
+            string when = seconds >= 3600 ? "%d:%02d:%02d".printf (seconds / 3600, (seconds / 60) % 60, seconds % 60) : "%d:%02d".printf (seconds / 60, seconds % 60);
+            string link = "sinty-videos://moment?uri=%s&t=%d".printf (GLib.Uri.escape_string (target, null, false), seconds);
+            try {
+                var note = Singularity.Notes.NotePicker.target (note_id, title);
+                Singularity.Notes.NotePicker.append (note, "[%s, %s](%s)\n".printf (title.replace ("]", ""), when, link));
+                add_toast (Singularity.Notes.NotePicker.toast (note, note_id == null, _("Moment")));
+            } catch (GLib.Error e) {
+                warning ("Videos: add moment failed: %s", e.message);
+            }
+        }
+
         private void _play_file (GLib.File file) {
             string uri = file.get_uri ();
+            if (uri.has_prefix ("sinty-videos://")) {
+                try {
+                    var parsed = GLib.Uri.parse (uri, GLib.UriFlags.NONE);
+                    var q = GLib.Uri.parse_params (parsed.get_query () ?? "", -1, "&", GLib.UriParamsFlags.NONE);
+                    string? target = q["uri"];
+                    if (target != null && target != "") _play_stream (target, null, null, int64.parse (q["t"] ?? "0") * 1000000000);
+                } catch (GLib.Error e) {
+                    warning ("Videos: bad moment link %s", uri);
+                }
+                return;
+            }
             if (uri.has_prefix ("videos-source:")) {
                 if (!_library.open_history_key (uri)) open_file_dialog ();
                 return;
@@ -903,6 +951,42 @@ namespace Singularity.Apps.Videos {
             _poke ();
         }
 
+        private bool _frame_geometry (out double ox, out double oy, out double scale) {
+            ox = oy = 0;
+            scale = 1;
+            var paintable = video_picture.paintable;
+            if (paintable == null || _live_text == null) return false;
+            Graphene.Rect bounds;
+            if (!video_picture.compute_bounds (_live_text.view, out bounds)) return false;
+            double w = paintable.get_intrinsic_width (), h = paintable.get_intrinsic_height ();
+            if (w <= 0 || h <= 0) return false;
+            scale = double.min (bounds.size.width / w, bounds.size.height / h);
+            ox = bounds.origin.x + (bounds.size.width - w * scale) / 2;
+            oy = bounds.origin.y + (bounds.size.height - h * scale) / 2;
+            return true;
+        }
+
+        private void _sync_live_text () {
+            if (_live_text == null) return;
+            if (_is_playing) {
+                _live_text.active = false;
+                _live_text.toggle.visible = false;
+                _live_text.set_texture (null);
+                return;
+            }
+            var paintable = video_picture.paintable;
+            var native = video_picture.get_native ();
+            if (paintable == null || native == null) return;
+            int w = paintable.get_intrinsic_width (), h = paintable.get_intrinsic_height ();
+            if (w <= 0 || h <= 0) return;
+            var snap = new Gtk.Snapshot ();
+            paintable.snapshot (snap, w, h);
+            var node = snap.to_node ();
+            if (node == null) return;
+            _live_text.set_texture (native.get_renderer ().render_texture (node, null));
+            _live_text.toggle.visible = true;
+        }
+
         private void _toggle_play () {
             if (_is_playing) {
                 _player.pause ();
@@ -917,6 +1001,7 @@ namespace Singularity.Apps.Videos {
             _poke ();
             _save_position ();
             _mpris.update ();
+            _sync_live_text ();
         }
 
         private void _stop () {
