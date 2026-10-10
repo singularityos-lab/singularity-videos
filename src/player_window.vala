@@ -135,7 +135,7 @@ namespace Singularity.Apps.Videos {
             share.bind_property ("enabled", _share_btn, "visible", GLib.BindingFlags.SYNC_CREATE);
             _media_actions += share;
             _media_actions += _add_win_action ("add-moment", () => {
-                if (_uri == "") return;
+                if (_uri == "" || !Singularity.Notes.NotePicker.available ()) return;
                 string target = _stream_item != null ? _stream_item.external_url : _uri;
                 if (target == "" || target.has_prefix ("videos-source:")) return;
                 int seconds = (int) (_player.position_ns () / 1000000000);
@@ -898,13 +898,13 @@ namespace Singularity.Apps.Videos {
         private void _add_moment (string target, string title, int seconds, string? note_id) {
             string when = seconds >= 3600 ? "%d:%02d:%02d".printf (seconds / 3600, (seconds / 60) % 60, seconds % 60) : "%d:%02d".printf (seconds / 60, seconds % 60);
             string link = "sinty-videos://moment?uri=%s&t=%d".printf (GLib.Uri.escape_string (target, null, false), seconds);
-            try {
-                var note = Singularity.Notes.NotePicker.target (note_id, title);
-                Singularity.Notes.NotePicker.append (note, "[%s, %s](%s)\n".printf (title.replace ("]", ""), when, link));
-                add_toast (Singularity.Notes.NotePicker.toast (note, note_id == null, _("Moment")));
-            } catch (GLib.Error e) {
-                warning ("Videos: add moment failed: %s", e.message);
-            }
+            Singularity.Notes.NotePicker.add.begin (note_id, title, "[%s, %s](%s)\n".printf (title.replace ("]", ""), when, link), (obj, res) => {
+                try {
+                    add_toast (Singularity.Notes.NotePicker.toast (Singularity.Notes.NotePicker.add.end (res), _("Moment")));
+                } catch (GLib.Error e) {
+                    add_toast (new Singularity.Widgets.Toast (e.message));
+                }
+            });
         }
 
         private void _play_file (GLib.File file) {
