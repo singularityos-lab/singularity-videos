@@ -86,10 +86,10 @@ namespace Singularity.Apps.Videos {
                 _deliver (url, null);
                 return;
             }
-            _session.send_and_read_async.begin (msg, GLib.Priority.LOW, null, (o, r) => {
+            Singularity.HttpBody.read.begin (_session, msg, 16 * 1024 * 1024, GLib.Priority.LOW, null, (o, r) => {
                 Gdk.Texture? tex = null;
                 try {
-                    var bytes = _session.send_and_read_async.end (r);
+                    var bytes = Singularity.HttpBody.read.end (r);
                     if (msg.status_code == 200 && bytes.get_size () > 0) {
                         tex = Gdk.Texture.from_bytes (bytes);
                         try {
