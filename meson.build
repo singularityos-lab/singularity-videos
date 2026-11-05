@@ -128,3 +128,13 @@ install_data('data/dev.sinty.videos.gschema.xml',
 install_data('data/icons/dev.sinty.videos.svg',
   install_dir: get_option('datadir') / 'icons' / 'hicolor' / 'scalable' / 'apps'
 )
+
+videos_service_conf = configuration_data()
+videos_service_conf.set('bindir', get_option('prefix') / get_option('bindir'))
+configure_file(
+  input: 'data/dev.sinty.videos.service.in',
+  output: 'dev.sinty.videos.service',
+  configuration: videos_service_conf,
+  install: true,
+  install_dir: get_option('datadir') / 'dbus-1' / 'services'
+)

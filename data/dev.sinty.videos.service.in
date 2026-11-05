@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=dev.sinty.videos
+Exec=@bindir@/singularity-videos --gapplication-service
