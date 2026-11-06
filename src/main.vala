@@ -99,6 +99,7 @@ namespace Singularity.Apps.Videos {
                 }
             });
             add_action (act_settings);
+            VideosIntents.install (this);
             set_accels_for_action ("app.settings", { "<Control>comma" });
             set_accels_for_action ("app.open", { "<Control>o" });
             set_accels_for_action ("win.trim", { "<Control>t" });
@@ -138,6 +139,11 @@ namespace Singularity.Apps.Videos {
             var act_quit = new GLib.SimpleAction ("quit", null);
             act_quit.activate.connect (() => quit ());
             add_action (act_quit);
+        }
+
+        public PlayerWindow ensure_window () {
+            activate ();
+            return _player_window;
         }
 
         protected override void activate () {

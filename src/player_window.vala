@@ -829,6 +829,22 @@ namespace Singularity.Apps.Videos {
             });
         }
 
+        public GstPlayer player { get { return _player; } }
+        public VideoHistory history { get { return _history; } }
+        public bool on_player { get { return _on_player (); } }
+
+        public void set_volume_level (double volume) {
+            _set_volume (volume);
+        }
+
+        public void set_muted (bool muted) {
+            if (_player.muted != muted) activate_action ("mute", null);
+        }
+
+        public void open_uri (string uri) {
+            _play_file (GLib.File.new_for_uri (uri));
+        }
+
         public bool mpris_playing { get { return _on_embed () ? _library.embed.playing : _is_playing; } }
         public bool mpris_loaded { get { return (_on_player () && _uri != "") || (_on_embed () && _library.embed.player != null); } }
         public string mpris_uri {

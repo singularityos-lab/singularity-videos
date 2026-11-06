@@ -39,6 +39,7 @@ resources = gnome.compile_resources(
 
 sources = files(
   'src/main.vala',
+  'src/agent_intents.vala',
   'src/player_window.vala',
   'src/gst_player.vala',
   'src/history.vala',
