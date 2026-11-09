@@ -118,7 +118,9 @@ namespace Singularity.Apps.Videos {
             string path = key.substring (6, key.last_index_of_char (':') - 6);
             string disk = _disk (key);
             new GLib.Thread<bool> ("videos-poster", () => {
+                var background = Singularity.BackgroundWork.enter ();
                 var png = _grab (GLib.File.new_for_path (path).get_uri (), disk);
+                background.finish ();
                 GLib.Idle.add (() => {
                     Gdk.Texture? tex = null;
                     if (png) {
