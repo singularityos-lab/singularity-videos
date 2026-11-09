@@ -86,20 +86,20 @@ executable('singularity-videos',
 
 videos_export = executable('videos-export',
   trim_core + files('src/trim/export_cli.vala'),
-  dependencies: trim_deps,
+  dependencies: trim_deps + [libsingularity_dep],
   vala_args: trim_args,
 )
 
 edit_list_test = executable('edit-list-test',
   trim_core + files('tests/edit_list_test.vala'),
-  dependencies: trim_deps,
+  dependencies: trim_deps + [libsingularity_dep],
   vala_args: trim_args,
 )
 test('edit-list', edit_list_test)
 
 export_test = executable('export-test',
   trim_core + files('tests/export_test.vala'),
-  dependencies: trim_deps,
+  dependencies: trim_deps + [libsingularity_dep],
   vala_args: trim_args,
 )
 test('export', export_test, timeout: 900, is_parallel: false)

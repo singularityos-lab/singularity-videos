@@ -117,11 +117,11 @@ namespace Singularity.Apps.Videos {
             string key = _frame_queue.poll ();
             string path = key.substring (6, key.last_index_of_char (':') - 6);
             string disk = _disk (key);
-            new GLib.Thread<bool> ("videos-poster", () => {
+            Async.dispatch(this, Async.Qos.USER, (c) => {
                 var background = Singularity.BackgroundWork.enter ();
                 var png = _grab (GLib.File.new_for_path (path).get_uri (), disk);
                 background.finish ();
-                GLib.Idle.add (() => {
+                return () => {
                     Gdk.Texture? tex = null;
                     if (png) {
                         try {
@@ -132,9 +132,7 @@ namespace Singularity.Apps.Videos {
                     _deliver (key, tex);
                     _frame_busy = false;
                     _pump ();
-                    return GLib.Source.REMOVE;
-                });
-                return true;
+                };
             });
         }
 

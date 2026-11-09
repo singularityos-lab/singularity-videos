@@ -42,15 +42,15 @@ namespace Singularity.Apps.Videos {
             thumbnail_count = has_video ? int.max (1, thumbnails) : 0;
             _thumbs = new Gdk.Texture?[thumbnail_count];
             if (has_video) {
-                new GLib.Thread<bool> ("videos-thumbs", () => {
+                Async.dispatch(this, Async.Qos.UTILITY, (c) => {
                     _extract_frames ();
-                    return true;
+                    return null;
                 });
             }
             if (has_audio) {
-                new GLib.Thread<bool> ("videos-wave", () => {
+                Async.dispatch(this, Async.Qos.USER, (c) => {
                     _extract_waveform ();
-                    return true;
+                    return null;
                 });
             }
         }

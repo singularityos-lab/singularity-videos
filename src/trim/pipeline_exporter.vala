@@ -44,11 +44,11 @@ namespace Singularity.Apps.Videos {
             EditClip[] clips = {};
             for (int i = 0; i < edl.size; i++) clips += edl.get_clip (i);
             string path = output_path;
-            new GLib.Thread<bool> ("videos-export", () => {
+            Async.dispatch(null, Async.Qos.USER, (c) => {
                 string? error = null;
                 bool ok = _run (segments, clips, path, out error);
                 finish_run (ok, error);
-                return ok;
+                return null;
             });
         }
 

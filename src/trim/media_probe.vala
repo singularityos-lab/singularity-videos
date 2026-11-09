@@ -51,13 +51,14 @@ namespace Singularity.Apps.Videos {
         public async EditClip? probe (string uri, out string? error) {
             EditClip? result = null;
             string? err = null;
-            GLib.SourceFunc cb = probe.callback;
-            new GLib.Thread<bool> ("videos-probe", () => {
-                result = probe_sync (uri, out err);
-                GLib.Idle.add ((owned) cb);
-                return true;
-            });
-            yield;
+            try {
+                yield Async.run<bool>((c) => {
+                    result = probe_sync (uri, out err);
+                    return true;
+                }, Async.Qos.UTILITY);
+            } catch (Error e) {
+                warning("%s", e.message);
+            }
             error = err;
             return result;
         }
