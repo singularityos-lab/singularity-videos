@@ -329,6 +329,8 @@ namespace Singularity.Apps.Videos {
             }
 
             play_btn.add_css_class ("videos-ctrl");
+            play_btn.add_css_class ("circular");
+            Singularity.Focus.set_primary (play_btn);
             speed_btn.add_css_class ("videos-ctrl");
             remaining_btn.add_css_class ("videos-time");
 
@@ -687,9 +689,7 @@ namespace Singularity.Apps.Videos {
                     _toggle_mute ();
                     return true;
                 case Gdk.Key.Escape:
-                    if (!fullscreened) return false;
-                    unfullscreen ();
-                    return true;
+                    return leave_fullscreen ();
                 default:
                     return false;
             }
@@ -1055,7 +1055,7 @@ namespace Singularity.Apps.Videos {
         }
 
         private void _toggle_fullscreen () {
-            if (fullscreened) unfullscreen (); else fullscreen ();
+            toggle_fullscreen ();
         }
 
         private void _skip (int64 ns) {

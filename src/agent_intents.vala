@@ -149,7 +149,7 @@ namespace Singularity.Apps.Videos {
                     if (args.has_member ("muted")) w.set_muted (args.get_boolean_member ("muted"));
                     if (args.has_member ("fullscreen")) {
                         if (args.get_boolean_member ("fullscreen")) w.fullscreen ();
-                        else w.unfullscreen ();
+                        else w.leave_fullscreen ();
                     }
                     return status (w);
                 });

@@ -92,12 +92,12 @@ namespace Singularity.Apps.Videos {
             foreach (var it in recent) {
                 if (it == _hero_item) continue;
                 _recent_items.add (it);
-                show (_recent.append_tile ("video-x-generic", it.title, it.subtitle), it);
+                show (_recent.append_tile ("video-x-generic", it.title, it.subtitle, it.key), it);
             }
             foreach (var it in files) {
                 _library_items.add (it);
                 string icon = it.kind == ItemKind.FOLDER ? "folder-videos" : "video-x-generic";
-                show (_library.append_tile (icon, it.title, it.subtitle), it);
+                show (_library.append_tile (icon, it.title, it.subtitle, it.key), it);
             }
             if (_hero_item == null && _library_items.size > 0) {
                 foreach (var it in _library_items) {
