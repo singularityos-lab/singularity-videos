@@ -36,7 +36,7 @@ namespace Singularity.Apps.Videos {
         }
 
         private string _disk (string key) {
-            return GLib.Path.build_filename (_dir, GLib.Checksum.compute_for_string (GLib.ChecksumType.MD5, key) + ".png");
+            return GLib.Path.build_filename (_dir, GLib.Checksum.compute_for_string (GLib.ChecksumType.MD5, "2:" + key) + ".png");
         }
 
         private bool _from_disk (string key, Ready cb) {
@@ -136,6 +136,19 @@ namespace Singularity.Apps.Videos {
             });
         }
 
+        private static bool _dark (uint8[] data, int stride, int width, int height) {
+            int64 sum = 0;
+            int64 n = 0;
+            for (int y = 0; y < height; y += 9) {
+                for (int x = 0; x < width; x += 9) {
+                    int o = y * stride + x * 4;
+                    sum += data[o] + data[o + 1] + data[o + 2];
+                    n += 3;
+                }
+            }
+            return n > 0 && sum / n < 14;
+        }
+
         private static bool _grab (string uri, string out_path) {
             Gst.Element pipeline;
             try {
@@ -156,25 +169,29 @@ namespace Singularity.Apps.Videos {
                 return false;
             }
             int64 dur = 0;
-            if (pipeline.query_duration (Gst.Format.TIME, out dur) && dur > 0) {
-                pipeline.seek_simple (Gst.Format.TIME, Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT, dur / 10);
-                pipeline.get_state (out state, out pending, 10 * Gst.SECOND);
-            }
-            var sample = sink.try_pull_preroll (5 * Gst.SECOND);
+            bool seekable = pipeline.query_duration (Gst.Format.TIME, out dur) && dur > 0;
+            int64[] spots = seekable ? new int64[] { dur / 10, dur / 3, dur / 2, dur * 2 / 3 } : new int64[] { -1 };
             bool ok = false;
-            if (sample != null) {
+            foreach (var spot in spots) {
+                if (spot >= 0) {
+                    pipeline.seek_simple (Gst.Format.TIME, Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT, spot);
+                    pipeline.get_state (out state, out pending, 10 * Gst.SECOND);
+                }
+                var sample = sink.try_pull_preroll (5 * Gst.SECOND);
+                if (sample == null) break;
                 unowned Gst.Caps? caps = sample.get_caps ();
                 unowned Gst.Buffer? buffer = sample.get_buffer ();
                 var info = new Gst.Video.Info ();
-                if (caps != null && buffer != null && info.from_caps (caps)) {
-                    Gst.MapInfo map;
-                    if (buffer.map (out map, Gst.MapFlags.READ)) {
-                        var bytes = new GLib.Bytes (map.data[0:info.stride[0] * info.height]);
-                        buffer.unmap (map);
-                        var tex = new Gdk.MemoryTexture (info.width, info.height, Gdk.MemoryFormat.R8G8B8A8, bytes, info.stride[0]);
-                        ok = tex.save_to_png (out_path);
-                    }
-                }
+                if (caps == null || buffer == null || !info.from_caps (caps)) break;
+                Gst.MapInfo map;
+                if (!buffer.map (out map, Gst.MapFlags.READ)) break;
+                var bytes = new GLib.Bytes (map.data[0:info.stride[0] * info.height]);
+                bool dark = _dark (map.data, info.stride[0], info.width, info.height);
+                buffer.unmap (map);
+                if (dark && spot != spots[spots.length - 1]) continue;
+                var tex = new Gdk.MemoryTexture (info.width, info.height, Gdk.MemoryFormat.R8G8B8A8, bytes, info.stride[0]);
+                ok = tex.save_to_png (out_path);
+                break;
             }
             pipeline.set_state (Gst.State.NULL);
             return ok;

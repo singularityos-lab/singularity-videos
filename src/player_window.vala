@@ -223,6 +223,18 @@ namespace Singularity.Apps.Videos {
             _library = new VideoLibrary (this, _history);
             _stack.add_named (_library.browse, "browse");
             _stack.add_named (_library.embed, "embed");
+            _stack.add_named (_library.home, "home");
+            _library.home_loaded.connect (() => {
+                string n = _stack.visible_child_name;
+                if (n == "welcome" && _library.home.has_content) {
+                    _library.bin.set_active (MediaBin.HOME);
+                    _stack.set_visible_child_name ("home");
+                    _library.home.focus_start ();
+                } else if (n == "home" && !_library.home.has_content) {
+                    _stack.set_visible_child_name ("welcome");
+                }
+            });
+            _library.reload_home ();
             _library.show_page.connect ((name) => _show_page (name));
             _library.message.connect ((text) => add_toast (new Singularity.Widgets.Toast (text)));
             _library.play_stream.connect ((uri, headers, item, start) => _play_stream (uri, headers, item, start));
@@ -480,6 +492,12 @@ namespace Singularity.Apps.Videos {
             });
         }
 
+        private string _rest_page () {
+            if (_library.bin.active == MediaBin.HOME || _library.browse.current == null)
+                return _library.home.has_content ? "home" : "welcome";
+            return "browse";
+        }
+
         private bool _on_trim () {
             return _stack != null && _stack.visible_child_name == "trim";
         }
@@ -496,7 +514,7 @@ namespace Singularity.Apps.Videos {
 
         private bool _sidebar_page () {
             string n = _stack != null ? _stack.visible_child_name : "";
-            return n == "welcome" || n == "browse";
+            return n == "welcome" || n == "browse" || n == "home";
         }
 
         private void _toggle_sidebar () {
@@ -513,13 +531,14 @@ namespace Singularity.Apps.Videos {
             }
             if (_on_player ()) {
                 _save_position ();
-                _show_page (_library.browse.current != null ? "browse" : "welcome");
+                _library.reload_home ();
+                _show_page (_rest_page ());
             }
         }
 
         private void _leave_embed () {
             _library.leave_embed ();
-            _stack.set_visible_child_name (_library.browse.current != null ? "browse" : "welcome");
+            _stack.set_visible_child_name (_rest_page ());
         }
 
         private void _sync_trim_bubbles () {
@@ -602,7 +621,7 @@ namespace Singularity.Apps.Videos {
         public void leave_trim () {
             if (_trim != null) _trim.stop ();
             title = _("Videos");
-            _stack.set_visible_child_name (_uri != "" ? "player" : "welcome");
+            _stack.set_visible_child_name (_uri != "" ? "player" : _rest_page ());
         }
 
         private void _export_trim () {

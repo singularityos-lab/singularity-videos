@@ -10,6 +10,7 @@ namespace Singularity.Apps.Videos {
         public MediaBin bin { get; private set; }
         public VideoBrowsePage browse { get; private set; }
         public EmbedPage embed { get; private set; }
+        public VideoHomePage home { get; private set; }
         public LocalVideosSource local { get; private set; }
 
         private Singularity.AppPluginHost _plugins;
@@ -40,6 +41,13 @@ namespace Singularity.Apps.Videos {
             bin = new MediaBin ();
             browse = new VideoBrowsePage ();
             embed = new EmbedPage ();
+            home = new VideoHomePage ();
+            home.play_item.connect ((it) => play (it));
+            home.open_item.connect ((it) => {
+                bin.set_active (LocalVideosSource.ID);
+                browse.open_root (local, it.id, it.title);
+                show_page ("browse");
+            });
             browse.play_item.connect ((it) => play (it));
             browse.open_uri.connect ((uri) => open_uri (uri));
             browse.request.connect ((what) => {
@@ -99,6 +107,11 @@ namespace Singularity.Apps.Videos {
 
         public void navigate (string id, string title) {
             bin.set_active (id);
+            if (id == MediaBin.HOME) {
+                reload_home ();
+                show_page (home.has_content ? "home" : "welcome");
+                return;
+            }
             if (id == MediaBin.RECENT) {
                 browse.recent_items = recent_items ();
                 browse.open_root (null, null, _("Recent"));
@@ -131,6 +144,15 @@ namespace Singularity.Apps.Videos {
             bin.set_active (s.id);
             browse.open_search (s, text);
             show_page ("browse");
+        }
+
+        public signal void home_loaded ();
+
+        public void reload_home () {
+            home.load.begin (recent_items (), local, (o, r) => {
+                home.load.end (r);
+                home_loaded ();
+            });
         }
 
         public Gee.List<MediaItem> recent_items () {

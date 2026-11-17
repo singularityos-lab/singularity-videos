@@ -4,6 +4,7 @@ namespace Singularity.Apps.Videos {
 
     public class MediaBin : Singularity.Widgets.AppSidebar {
         public const string RECENT = "recent";
+        public const string HOME = "home";
 
         private Gtk.Box _library = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
         private Gtk.Box _sources = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
@@ -35,6 +36,7 @@ namespace Singularity.Apps.Videos {
 
             box.append (new Singularity.Widgets.SidebarSectionLabel (_("Library")));
             box.append (_library);
+            _add_row (_library, HOME, "go-home-symbolic", _("Home"));
             _add_row (_library, LocalVideosSource.ID, "folder-videos-symbolic", _("Videos"));
             _add_row (_library, RECENT, "document-open-recent-symbolic", _("Recent"));
 

@@ -51,6 +51,7 @@ sources = files(
   'src/library/poster_frame.vala',
   'src/library/browse_page.vala',
   'src/library/embed_page.vala',
+  'src/library/home_page.vala',
   'src/library/library.vala',
 )
 
