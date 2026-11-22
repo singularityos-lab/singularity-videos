@@ -1,1 +1,3 @@
 option('ges', type: 'feature', value: 'auto', description: 'Export trimmed videos with GStreamer Editing Services when available')
+option('iride', type: 'feature', value: 'disabled',
+  description: 'Compile the Iride icon next to its SVG')
