@@ -7,7 +7,7 @@ int main (string[] args) {
 
 namespace Singularity.Apps.Videos {
 
-    public class VideosApp : Singularity.Application {
+    public class VideosApp : Singularity.Application, Singularity.Migration.Migratable {
 
         private PlayerWindow? _player_window = null;
         private bool _trim_files = false;
@@ -39,6 +39,9 @@ namespace Singularity.Apps.Videos {
 
         protected override void startup () {
             base.startup ();
+            string[] gst_args = {};
+            unowned string[] ua = gst_args;
+            Gst.init (ref ua);
 
             var css = new Gtk.CssProvider ();
             css.load_from_resource ("/dev/sinty/videos/style.css");
@@ -147,10 +150,6 @@ namespace Singularity.Apps.Videos {
         }
 
         protected override void activate () {
-            string[] gst_args = {};
-            unowned string[] ua = gst_args;
-            Gst.init (ref ua);
-
             // Re-activation must NOT spawn a second window - GTK / the
             // portal can call `activate()` multiple times during a single
             // session (e.g. after FileChooserNative completes, or when the
@@ -161,6 +160,36 @@ namespace Singularity.Apps.Videos {
                 _player_window = new PlayerWindow (this);
             }
             _player_window.present ();
+        }
+
+        public GLib.Variant save_model () {
+            return new GLib.VariantDict ().end ();
+        }
+
+        public async void restore_model (GLib.Variant model) throws GLib.Error {
+        }
+
+        public string window_kind (Gtk.Window window) {
+            return (window is PlayerWindow) ? "player" : "";
+        }
+
+        public GLib.Variant save_window (Gtk.Window window) {
+            return ((PlayerWindow) window).save_migration ();
+        }
+
+        public string[] files () {
+            return _player_window != null ? _player_window.migration_files () : new string[0];
+        }
+
+        public async Gtk.Window? rebuild_window (string kind, GLib.Variant data) throws GLib.Error {
+            if (kind != "player") return null;
+            if (_player_window != null) {
+                _player_window.shutdown ();
+                _player_window.destroy ();
+            }
+            _player_window = new PlayerWindow (this);
+            yield _player_window.restore_migration (data);
+            return _player_window;
         }
 
         public override void open (GLib.File[] files, string hint) {

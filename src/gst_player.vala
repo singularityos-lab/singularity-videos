@@ -301,6 +301,22 @@ namespace Singularity.Apps.Videos {
             return 0;
         }
 
+        public int64 frame_ns () {
+            Gst.Sample? sample = null;
+            if (_playbin != null) _playbin.get ("sample", out sample);
+            unowned Gst.Buffer? buffer = sample != null ? sample.get_buffer () : null;
+            if (buffer == null || buffer.pts == Gst.CLOCK_TIME_NONE) return position_ns ();
+            if (buffer.duration == Gst.CLOCK_TIME_NONE) return (int64) sample.get_segment ().to_stream_time (Gst.Format.TIME, buffer.pts);
+            uint64 frame = buffer.duration;
+            int num = 0, den = 1;
+            unowned Gst.Caps? caps = sample.get_caps ();
+            if (caps != null && caps.get_size () > 0 && caps.get_structure (0).get_fraction ("framerate", out num, out den) && num > 0)
+                frame = Gst.Util.uint64_scale_int (Gst.SECOND, den, num);
+            uint64 end = buffer.pts + buffer.duration;
+            uint64 middle = end > frame / 2 ? end - frame / 2 : buffer.pts;
+            return (int64) sample.get_segment ().to_stream_time (Gst.Format.TIME, middle);
+        }
+
         public int64 duration_ns () {
             int64 dur = 0;
             if (_playbin != null && _playbin.query_duration (Gst.Format.TIME, out dur)) return dur;

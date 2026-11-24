@@ -7,6 +7,7 @@ namespace Singularity.Apps.Videos {
 
         public signal void load_failed (string message);
         public signal void loaded ();
+        public signal void probed ();
 
         public EditList edl {
             get { return _edl; }
@@ -232,6 +233,7 @@ namespace Singularity.Apps.Videos {
         private void _probe_next (bool first) {
             if (_queue.size == 0) {
                 _probing = false;
+                probed ();
                 return;
             }
             _probing = true;
@@ -253,6 +255,78 @@ namespace Singularity.Apps.Videos {
                 }
                 _probe_next (false);
             });
+        }
+
+        public GLib.Variant save_state () {
+            var clips = new GLib.VariantBuilder (new GLib.VariantType ("a(sxxa(xx))"));
+            for (int i = 0; i < edl.size; i++) {
+                var clip = edl.get_clip (i);
+                var cuts = new GLib.VariantBuilder (new GLib.VariantType ("a(xx)"));
+                foreach (var c in clip.cuts ()) cuts.add ("(xx)", c.start, c.end);
+                clips.add ("(sxx@a(xx))", Singularity.Migration.portable_path (GLib.File.new_for_uri (clip.uri)), clip.in_point, clip.out_point, cuts.end ());
+            }
+            var crop = edl.crop;
+            return new GLib.Variant ("(@a(sxxa(xx))i(dddd)dbiixxxb)", clips.end (), edl.rotation, crop.left, crop.top, crop.right, crop.bottom,
+                _canvas.aspect, _crop_btn.active, _timeline.selected, _current, _position, _timeline.mark_in, _timeline.mark_out, modified);
+        }
+
+        public string[] files () {
+            string[] all = {};
+            for (int i = 0; i < edl.size; i++) all += Singularity.Migration.portable_path (GLib.File.new_for_uri (edl.get_clip (i).uri));
+            return all;
+        }
+
+        public async void restore_state (GLib.Variant state) {
+            GLib.Variant clips;
+            int rotation, selected, current;
+            double left, top, right, bottom, aspect;
+            bool crop_mode, was_modified;
+            int64 position, mark_in, mark_out;
+            state.get ("(@a(sxxa(xx))i(dddd)dbiixxxb)", out clips, out rotation, out left, out top, out right, out bottom,
+                out aspect, out crop_mode, out selected, out current, out position, out mark_in, out mark_out, out was_modified);
+            string path;
+            int64 in_point, out_point;
+            GLib.Variant cuts;
+            bool first = true;
+            var it = clips.iterator ();
+            while (it.next ("(sxx@a(xx))", out path, out in_point, out out_point, out cuts)) {
+                var file = Singularity.Migration.local_file (path);
+                if (first) open_file (file);
+                else add_file (file);
+                first = false;
+            }
+            if (_probing) {
+                ulong id = probed.connect (() => restore_state.callback ());
+                yield;
+                disconnect (id);
+            }
+            int next = 0;
+            it = clips.iterator ();
+            while (it.next ("(sxx@a(xx))", out path, out in_point, out out_point, out cuts)) {
+                if (next >= edl.size) break;
+                var clip = edl.get_clip (next);
+                if (clip.uri != Singularity.Migration.local_file (path).get_uri ()) continue;
+                clip.set_trim (in_point, out_point);
+                clip.clear_cuts ();
+                int64 start, end;
+                var ci = cuts.iterator ();
+                while (ci.next ("(xx)", out start, out end)) clip.add_cut (start, end);
+                next++;
+            }
+            edl.set_rotation (rotation);
+            edl.set_crop (new CropBox (left, top, right, bottom));
+            _canvas.aspect = aspect;
+            _crop_btn.active = crop_mode;
+            edl.notify_changed ();
+            modified = was_modified;
+            if (current >= 0 && current < edl.size) {
+                _current = -1;
+                _show (current, position);
+            }
+            if (selected >= 0 && selected < edl.size) _timeline.selected = selected;
+            _timeline.mark_in = mark_in;
+            _timeline.mark_out = mark_out;
+            _sync_tools ();
         }
 
         public void add_clips_dialog () {

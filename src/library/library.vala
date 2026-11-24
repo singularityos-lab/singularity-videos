@@ -350,6 +350,19 @@ namespace Singularity.Apps.Videos {
             embed.release ();
         }
 
+        public GLib.Variant save_state () {
+            return new GLib.Variant ("(s@a(asassasd))", bin.active, browse.save_levels ());
+        }
+
+        public void restore_state (GLib.Variant state) {
+            string active;
+            GLib.Variant levels;
+            state.get ("(s@a(asassasd))", out active, out levels);
+            bin.set_active (active);
+            if (active == MediaBin.RECENT) browse.recent_items = recent_items ();
+            if (levels.n_children () > 0) browse.restore_levels (levels, registry);
+        }
+
         public bool open_history_key (string key) {
             var e = _history.find (key);
             if (e == null || !e.remote) return false;

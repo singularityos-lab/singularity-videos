@@ -482,16 +482,123 @@ namespace Singularity.Apps.Videos {
             });
 
             close_request.connect (() => {
-                _save_position ();
-                _mpris.stop ();
-                if (_resume_id != 0) { GLib.Source.remove (_resume_id); _resume_id = 0; }
-                if (_pos_timer_id != 0) { GLib.Source.remove (_pos_timer_id); _pos_timer_id = 0; }
-                if (_click_timer_id != 0) { GLib.Source.remove (_click_timer_id); _click_timer_id = 0; }
-                _cancel_hide ();
-                if (_trim != null) _trim.shutdown ();
-                _library.shutdown ();
+                shutdown ();
                 return false;
             });
+        }
+
+        public void shutdown () {
+            _save_position ();
+            _mpris.stop ();
+            if (_resume_id != 0) { GLib.Source.remove (_resume_id); _resume_id = 0; }
+            if (_pos_timer_id != 0) { GLib.Source.remove (_pos_timer_id); _pos_timer_id = 0; }
+            if (_click_timer_id != 0) { GLib.Source.remove (_click_timer_id); _click_timer_id = 0; }
+            _cancel_hide ();
+            if (_trim != null) _trim.shutdown ();
+            _library.shutdown ();
+            _player.close ();
+        }
+
+        public GLib.Variant save_migration () {
+            var d = new GLib.VariantDict ();
+            string page = _stack.visible_child_name;
+            d.insert_value ("page", new GLib.Variant.string (page));
+            d.insert_value ("sidebar", new GLib.Variant.boolean (_sidebar_wanted));
+            d.insert_value ("library", _library.save_state ());
+            d.insert_value ("volume", new GLib.Variant ("(db)", _player.volume, _player.muted));
+            if (page == "embed" && _library.embed.item != null) {
+                var it = _library.embed.item;
+                d.insert_value ("item", new GLib.Variant ("(ssss)", it.source_id, it.id, it.title, it.image_url));
+            }
+            if (_uri != "" && (page == "player" || page == "error" || page == "trim")) {
+                if (_stream_item != null) {
+                    d.insert_value ("item", new GLib.Variant ("(ssss)", _stream_item.source_id, _stream_item.id, _stream_item.title, _stream_item.image_url));
+                } else {
+                    d.insert_value ("uri", new GLib.Variant.string (Singularity.Migration.portable_path (GLib.File.new_for_uri (_uri))));
+                }
+                d.insert_value ("position", new GLib.Variant ("(xx)", _is_playing ? _player.position_ns () : _player.frame_ns (), _player.duration_ns ()));
+                d.insert_value ("playing", new GLib.Variant.boolean (_is_playing));
+                d.insert_value ("rate", new GLib.Variant.double (_player.rate));
+                d.insert_value ("tracks", new GLib.Variant ("(ii)", _player.current_audio, _player.current_subtitle));
+            }
+            if (page == "trim" && _trim != null) d.insert_value ("trim", _trim.save_state ());
+            return d.end ();
+        }
+
+        public string[] migration_files () {
+            string[] files = {};
+            if (_uri.has_prefix ("file://")) files += Singularity.Migration.portable_path (GLib.File.new_for_uri (_uri));
+            if (_trim != null && _on_trim ()) {
+                foreach (var f in _trim.files ()) files += f;
+            }
+            return files;
+        }
+
+        public async void restore_migration (GLib.Variant data) {
+            var d = new GLib.VariantDict (data);
+            string page = "welcome";
+            d.lookup ("page", "s", out page);
+            bool sidebar;
+            if (d.lookup ("sidebar", "b", out sidebar)) _sidebar_wanted = sidebar;
+            var library = d.lookup_value ("library", null);
+            if (library != null) _library.restore_state (library);
+            double volume;
+            bool muted;
+            if (d.lookup ("volume", "(db)", out volume, out muted)) {
+                _player.volume = volume;
+                _player.muted = muted;
+                _sync_volume ();
+            }
+            int64 position = 0, duration = 0;
+            d.lookup ("position", "(xx)", out position, out duration);
+            string source_id, item_id, item_title, image_url;
+            string uri;
+            if (d.lookup ("item", "(ssss)", out source_id, out item_id, out item_title, out image_url)) {
+                string key = VideoHistory.remote_key (source_id, item_id);
+                _history.record_item (key, position, duration, item_title, source_id, item_id, image_url);
+                _play_file (GLib.File.new_for_uri (key));
+            } else if (d.lookup ("uri", "s", out uri)) {
+                _play_file (Singularity.Migration.local_file (uri));
+                bool playing = true;
+                d.lookup ("playing", "b", out playing);
+                if (!playing && _is_playing) _toggle_play ();
+                _resume (position);
+                yield _resumed (position);
+            }
+            double rate;
+            if (d.lookup ("rate", "d", out rate) && rate != 1.0) _set_rate (rate);
+            int audio, subtitle;
+            if (d.lookup ("tracks", "(ii)", out audio, out subtitle)) {
+                ulong id = 0;
+                id = _player.tracks_changed.connect (() => {
+                    _player.disconnect (id);
+                    _player.current_audio = audio;
+                    _player.current_subtitle = subtitle;
+                    _rebuild_tracks ();
+                });
+            }
+            var trim = d.lookup_value ("trim", null);
+            if (page == "trim" && trim != null) {
+                if (_is_playing) _toggle_play ();
+                var view = _ensure_trim ();
+                title = _("Trim");
+                _stack.set_visible_child_name ("trim");
+                yield view.restore_state (trim);
+            } else if (page == "browse") {
+                _show_page ("browse");
+            }
+            _sync_trim_bubbles ();
+        }
+
+        private async void _resumed (int64 position) {
+            int64 deadline = GLib.get_monotonic_time () + 5000000;
+            while ((_resume_id != 0 || (!_is_playing && _player.frame_ns () != int64.min (position, _player.duration_ns ())))
+                   && GLib.get_monotonic_time () < deadline) {
+                GLib.Timeout.add (50, _resumed.callback);
+                yield;
+            }
+            _update_position ();
+            _sync_live_text ();
         }
 
         private string _rest_page () {
@@ -1138,7 +1245,7 @@ namespace Singularity.Apps.Videos {
         private void _update_position () {
             if (_seek == null) return;
             int64 dur = _player.duration_ns ();
-            int64 pos = _player.position_ns ();
+            int64 pos = _is_playing ? _player.position_ns () : _player.frame_ns ();
             _seek.duration = dur;
             if (!_seek.dragging) {
                 _seek.fraction = dur > 0 ? ((double) pos / dur).clamp (0, 1) : 0;

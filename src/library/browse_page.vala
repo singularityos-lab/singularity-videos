@@ -140,6 +140,41 @@ namespace Singularity.Apps.Videos {
             get { return _levels.size > 1; }
         }
 
+        public GLib.Variant save_levels () {
+            var all = new GLib.VariantBuilder (new GLib.VariantType ("a(asassasd)"));
+            for (int i = 0; i < _levels.size; i++) {
+                var l = _levels[i];
+                double scroll = i == _levels.size - 1 ? _scroll.vadjustment.value : l.scroll;
+                all.add ("(@as@ass@asd)", _optional (l.source != null ? l.source.id : null), _optional (l.node), l.title, _optional (l.query), scroll);
+            }
+            return all.end ();
+        }
+
+        private static GLib.Variant _optional (string? value) {
+            return new GLib.Variant.strv (value != null ? new string[] { value } : new string[0]);
+        }
+
+        private static string? _present (GLib.Variant value) {
+            return value.n_children () > 0 ? value.get_child_value (0).get_string () : null;
+        }
+
+        public void restore_levels (GLib.Variant levels, SourceRegistry registry) {
+            _levels.clear ();
+            GLib.Variant sources, nodes, queries;
+            string title;
+            double scroll;
+            var it = levels.iterator ();
+            while (it.next ("(@as@ass@asd)", out sources, out nodes, out title, out queries, out scroll)) {
+                string? source = _present (sources), node = _present (nodes), query = _present (queries);
+                MediaSource? s = source != null ? registry.find (source) : null;
+                if (source != null && s == null) continue;
+                var level = new BrowseLevel (s, node, title, query);
+                level.scroll = scroll;
+                _levels.add (level);
+            }
+            reload ();
+        }
+
         public void open_root (MediaSource? source, string? node, string title) {
             _levels.clear ();
             _push (new BrowseLevel (source, node, title));
